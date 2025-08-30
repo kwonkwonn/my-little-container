@@ -3,6 +3,7 @@ package runtime
 import (
 	"bufio"
 	"fmt"
+	"strconv"
 
 	"github.com/kwonkwonn/my-little-container/container"
 )
@@ -18,12 +19,12 @@ func newContainer(reader *bufio.Reader)(container.Container_order, error){
 	exec_path,_:= reader.ReadString('\n')
 	containerOrder.Exec_path = exec_path[:len(exec_path)-1]
 	
-	fmt.Println("Enter CPU limit (e.g., 1000 for 30%):")
+	fmt.Println("Enter CPU limit (e.g., 10000 for 10%):")
 	cpu,_:= reader.ReadString('\n')
 	containerOrder.ContainerConf = &container.Container_config{}
-	containerOrder.ContainerConf.Cpu = cpu[:len(cpu)-1]
-	if AtoI(containerOrder.ContainerConf.Cpu) > 30000{
-		return container.Container_order{}, fmt.Errorf("CPU limit exceeds maximum of 30000")
+	containerOrder.ContainerConf.Cpu, _= strconv.Atoi(cpu[:len(cpu)-1])
+	if containerOrder.ContainerConf.Cpu > 100000{
+		return container.Container_order{}, fmt.Errorf("CPU limit exceeds maximum of 100000")
 	} 
 	// fmt.Println("Enter Memory limit (e.g., 500m for 500MB):")
 	// memory,_:= reader.ReadString('\n')

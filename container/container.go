@@ -11,7 +11,7 @@ type Container struct {
 
 type Container_config struct {
 	Volumes  []string
-	Cpu      string // 300000 = total
+	Cpu      int // 300000 = total
 	Memory   string
 }
 

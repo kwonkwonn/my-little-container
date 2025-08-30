@@ -25,32 +25,33 @@ func New_container(config Container_order)(*Container, error){
 		}	
 	newCon.current_pid = cmd.Process.Pid
 	fmt.Println("New container PID:", newCon.current_pid)
-	
-	// 프로세스가 종료될 때 좀비가 되지 않도록 고루틴에서 대기
-	go func() {
-		cmd.Wait() // 프로세스 종료를 기다림 (좀비 방지)
-		fmt.Printf("Container process %d has terminated\n", newCon.current_pid)
-	}()
-	
 	err = os.Mkdir(newCon.path, 0755)
 	if err != nil {
 		return nil, err
 	}
 
-	err= os.WriteFile(newCon.path+"/cgroup.procs", []byte(strconv.Itoa(newCon.current_pid)), 0644)
-	if err != nil {
-		fmt.Printf("Error moving process %d to cgroup: %v\n", newCon.current_pid, err)
-		return nil, err
-	}
-	
-	// 실제로 cgroup에 들어갔는지 확인
-	fmt.Printf("Attempting to move PID %d to cgroup %s\n", newCon.current_pid, newCon.path)
-	
-	err = os.WriteFile(newCon.path+"/cpu.weight", []byte(newCon.containerConf.Cpu), 0644)
+
+	f, err := os.OpenFile(newCon.path+"/cgroup.procs", os.O_WRONLY, 0)
 	if err != nil {
 		return nil, err
 	}
-	
+	defer f.Close()
+
+	if _, err := f.Write([]byte(strconv.Itoa(newCon.current_pid))); err != nil {
+		return nil, err
+	}
+
+	cpuTime := fmt.Sprintf("%d %d", newCon.containerConf.Cpu, 100000)
+	f2, err := os.OpenFile(newCon.path+"/cpu.max", os.O_WRONLY, 0)
+	if err != nil {
+		return nil, err
+	}
+	defer f2.Close()
+
+	if _, err := f2.Write([]byte(cpuTime)); err != nil {
+		return nil, err
+	}
+
 	return newCon,nil
 }
 
